@@ -91,6 +91,7 @@ def _strip_code_fence(text:str)->str:
     s = text.strip()
     if s.startswith("```"):
         s = s[3:]
+        s = s.lstrip()
         if s[:4].lower()=="json":
             s = s[4:]
     if s.rstrip().endswith("```"):
@@ -105,7 +106,7 @@ def _repair_hint(error:ValidationError|None)->str:
     for err in error.errors():
         loc = ".".join(str(p) for p in err["loc"]) or "<根对象>"
         problems.append(f"{loc}:{err['msg']}")
-    return "上一次输出不合法："+"；".join(problems)+"请修正后只输出JSON"
+    return "上一次输出不合法："+"；".join(problems)+"。请修正后只输出JSON"
 
 
 async def chat_json(
