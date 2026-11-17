@@ -21,6 +21,11 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 DEFAULT_TIMEOUT = 120.0
 
+CONNECT_TIMEOUT = 5.0
+
+def _timeout(seconds:float)->httpx.Timeout:
+    return httpx.Timeout(seconds,connect=CONNECT_TIMEOUT)
+
 class LLMError(RuntimeError):
     """调用百炼失败：HTTP 非 200、返回结构不符合 OpenAI 兼容格式、JSON 校验不过。"""
 
@@ -37,7 +42,7 @@ async def _request(
         f"{base_url}/chat/completions",
         headers={"Authorization":f"Bearer {settings.dashscope_api_key}"},
         json=payload,
-        timeout=timeout,
+        timeout=_timeout(timeout),
     )
 
     if resp.status_code != 200:
@@ -77,19 +82,20 @@ def _ensure_json_hint(messages: list[dict[str,Any]])->list[dict[str,Any]]:
     if "json" in joined:
         return list(messages)
     return [
-        {"role":"system","content":"主输出一个JSON对象，不要解释文字，不要Markdown代码块"},
+        {"role":"system","content":"只输出一个JSON对象，不要解释文字，不要Markdown代码块"},
         *messages,
     ]
 
 def _strip_code_fence(text:str)->str:
     """模型偶尔仍会用```json包一层，剥掉再解析"""
     s = text.strip()
-    if not s.startswith("```"):
-        return s
-    lines = s.splitlines()[1:]
-    if lines and lines[-1].strip()=="```":
-        lines = lines[:-1]
-    return "\\n".join(lines).strip()
+    if s.startswith("```"):
+        s = s[3:]
+        if s[:4].lower()=="json":
+            s = s[4:]
+    if s.rstrip().endswith("```"):
+        s = s.rstrip()[:-3]
+    return s.strip()
 
 def _repair_hint(error:ValidationError|None)->str:
     """把pydantic的错误压成能返回给模型的提示"""
@@ -117,6 +123,10 @@ async def chat_json(
     重试策略：把上一次的原文和「哪里不合法」追加进对话再问一次，共 max_attempts 次。
     只对「JSON 解析失败 / schema 校验失败」重试；HTTP 错误直接抛，避免对 401 无意义重试
     """
+
+    if not (isinstance(schema,type) and issubclass(schema,BaseModel)):
+        raise TypeError(f"schema必须是BaseModel的子类，收到{schema!r}")
+
     if max_attempts<1:
         raise ValueError("max_attempts至少为1")
 
