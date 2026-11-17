@@ -140,7 +140,7 @@ demo。
 
 输入：项目摘要（文件解析结果）+ 岗位/技术栈 +
 按覆盖缺口选出的面经结构记录  
-输出：`{ id, dimension, text, source: "project"|"jingyan" }`，一批 5–8
+输出：`{ id, dimension, text, source: "project"|"interview_experience" }`，一批 5–8
 题
 
 
@@ -193,7 +193,7 @@ embedding）。两条数据结构示例：
 
 ```
 {
-  "jingyan": { "raw_text": "面试官先问RAG的切分策略…",
+  "interview_experience": { "raw_text": "面试官先问RAG的切分策略…",
                "dimension": "检索与切分",
                "followup_template": "为什么按这个块大小切？→ 如果文档很长怎么办？",
                "tags": ["Python", "RAG"] },
