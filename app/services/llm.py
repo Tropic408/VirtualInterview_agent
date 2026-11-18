@@ -109,6 +109,7 @@ def _repair_hint(error:ValidationError|None)->str:
     return "上一次输出不合法："+"；".join(problems)+"。请修正后只输出JSON"
 
 
+#单独一个 * 是 Python 的 keyword-only 标记：它之后的所有形参只能用关键字方式传，不能按位置传。
 async def chat_json(
         messages: list[dict[str,Any]],
         *,

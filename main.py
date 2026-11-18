@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI
 from qdrant_client import AsyncQdrantClient
-from sqlalchemy import create_engine
 import redis.asyncio as aioredis
 
 from app.api.routes import health
@@ -11,6 +10,7 @@ from app.api.chat import router as chat_router
 from app.api.ingest import router as ingest_router
 
 from app.core.config import settings
+from app.core.db import engine, init_models
 
 
 @asynccontextmanager
@@ -21,9 +21,8 @@ async def lifespan(app: FastAPI):
     )
     app.state.qdrant = AsyncQdrantClient(url=settings.qdrant_url, timeout=2)
     app.state.http_client = httpx.AsyncClient(timeout=httpx.Timeout(2.0))
-    app.state.mysql_engine = create_engine(
-        settings.mysql_dsn, pool_pre_ping=True, connect_args={"connect_timeout": 2}
-    )
+    app.state.mysql_engine = engine
+    init_models()
 
     yield
 
