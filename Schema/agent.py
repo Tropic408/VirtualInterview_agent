@@ -78,6 +78,7 @@ class DimensionScores(_StrictModel):
 class ScoreResult(_StrictModel):
     question_id: str = Field(min_length=1)
     scores: DimensionScores
+    on_topic: bool = Field(default=True,description="答案是否切题；False表示跑题")
     comment: str=Field(min_length=1,description="点评，必须说明扣分点")
     evidence: list[str] = Field(
         default_factory = list,
@@ -88,5 +89,5 @@ class ScoreResult(_StrictModel):
 class FollowUp(_StrictModel):
     question_id: str = Field(min_length=1,description="被追问的问题 id")
     depth: int = Field(ge=1,le=MAX_DEPTH,description="追问层级，1 为第一次追问")
-    template_id: str = Field(min_length=1,description="命中的追问链模板 id")
+    template_id: str = Field(default="",description="命中的追问链模板 id")
     text: str = Field(min_length=1,description="追问的话术")
